@@ -15,7 +15,7 @@ var config = require('./config/database');
 try{
     mongoose.connect(config.database);
 }
-catch(exception e){
+catch(e){
     console.log(e.message);
 }
 
@@ -47,10 +47,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/api', api);
 app.get('/', function(req, res) {
     res.send('Page under construction.');
 });
-app.use('/api', api);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
