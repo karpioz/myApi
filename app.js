@@ -1,15 +1,14 @@
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
-var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var passport = require('passport');
 var config = require('./config/database');
-var winston = require('./winston');
+var winston = require('./config/winston');
+var morgan = require('morgan');
 
-winston.add(winston.transports.File, {     "filename": "error.log",     "level": "error" });
 
 winston.error("Something went wrong");
 
@@ -18,6 +17,7 @@ try{
 }
 catch(e){
     console.log(e.message);
+    winston.error(e.message);
 }
 
 
@@ -46,12 +46,12 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
+//app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(morgan('combined', {stream: winston.stream}));
 //app.use('/', index);
 app.use('/api', api);
 app.use('/users', users);
