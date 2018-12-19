@@ -6,71 +6,81 @@ var express = require('express');
 var jwt = require('jsonwebtoken');
 var router = express.Router();
 var User = require("../models/user");
-var Book = require("../models/film");
+var Film = require("../models/film");
+var winston = require('winston');
 
+
+///Create router for signup or register the new user.
 router.post('/signup', function(req, res) {
+
     if (!req.body.email || !req.body.password) {
-        res.json({success: false, msg: 'Please pass username and password.'});
+        res.json({success: false, msg: 'Please pass email and password.'});
     } else {
         var newUser = new User({
             email: req.body.email,
             password: req.body.password
+
         });
-// save the user
+        // save the user
         newUser.save(function(err) {
             if (err) {
-                return res.json({success: false, msg: 'Username already exists.'});
+                console.log(err);
+                return res.json({success: false, msg: 'email already exists.'});
             }
             res.json({success: true, msg: 'Successful created new user.'});
         });
     }
 });
-
-// Create router login or sign-up
-
 router.post('/signin', function(req, res) {
+
     User.findOne({
         email: req.body.email
     }, function(err, user) {
-        if (err) throw err;
+        if (err) {
+            console.log(err);
+            throw err;
+        }
         if (!user) {
             res.status(401).send({success: false, msg: 'Authentication failed. User not found.'});
         } else {
-// check if password matches
-                user.comparePassword(req.body.password, function (err, isMatch) {
-                    if (isMatch && !err) {
-// if user is found and password is right create a token
-                        var token = jwt.sign(user.toJSON, config.secret);
-// return the information including token as JSON
-                        res.json({success: true, token: 'JWT ' + token});
-                    } else {
-                        res.status(401).send({success: false, msg: 'Authentication failed. Wrong password.'});
-                    }
-                    });
-            }
-        });
+            // check if password matches
+            user.comparePassword(req.body.password, function (err, isMatch) {
+                if (isMatch && !err) {
+                    // if user is found and password is right create a token
+                    var token = jwt.sign(user.toJSON(), config.secret);
+                    // return the information including token as JSON
+                    res.json({success: true, token: 'JWT ' + token});
+                } else {
+                    res.status(401).send({success: false, msg: 'Authentication failed. Wrong password.'});
+                }
+            });
+        }
+    });
 });
 
-// Create router for add new book that only accessible to authorized user
 
-router.post('/film', passport.authenticate('jwt', { session: false}), function(req,
-                                                                               res) {
+// Film Reviews  REST Services
+
+//Create Film Review
+router.post('/film', passport.authenticate('jwt', { session: false}), function(req, res) {
     var token = getToken(req.headers);
     if (token) {
         console.log(req.body);
         var newFilm = new Film({
-            id:req.body.id,
+
             title: req.body.title,
-            director: req.body.title,
+            director: req.body.director,
             studio: req.body.studio,
             year: req.body.year,
             review: req.body.review,
-            reviewer:req.body.reviwer,
-            img: req.body.img,
+            reviewer:req.body.reviewer,
+            img: req.body.img
+
         });
+
         newFilm.save(function(err) {
             if (err) {
-                return res.json({success: false, msg: 'Save filefailed.'});
+                return res.json({success: false, msg: 'Save film failed.'});
             }
             res.json({success: true, msg: 'Successful created new film.'});
         });
@@ -78,13 +88,11 @@ router.post('/film', passport.authenticate('jwt', { session: false}), function(r
         return res.status(403).send({success: false, msg: 'Unauthorized.'});
     }
 });
-
-// Create router for getting list of books that accessible for authorized user
-
+// Get All Films
 router.get('/film', passport.authenticate('jwt', { session: false}), function(req, res) {
     var token = getToken(req.headers);
     if (token) {
-        Film.find(function (err, films) {
+        Film.find(function (err,films) {
             if (err) return next(err);
             res.json(films);
         });
@@ -93,7 +101,45 @@ router.get('/film', passport.authenticate('jwt', { session: false}), function(re
     }
 });
 
-// Create function for parse authorization token from request headers
+/* GET SINGLE Film BY ID */
+router.get('/film:id', passport.authenticate('jwt', { session: false}), function(req, res, next) {
+    var token = getToken(req.headers);
+    if (token) {
+        Film.findById(req.params.id, function (err, post) {
+            if (err) return next(err);
+            res.json(post);
+        });
+    } else {
+        return res.status(403).send({success: false, msg: 'Unauthorized.'});
+    }
+});
+
+
+/* UPDATE Film Review */
+router.put('/film:id', passport.authenticate('jwt', { session: false}), function(req, res, next) {
+    var token = getToken(req.headers);
+    if (token) {
+        Film.findByIdAndUpdate(req.params.id, req.body, function (err, post) {
+            if (err) return next(err);
+            res.json(post);
+        });
+    } else {
+        return res.status(403).send({success: false, msg: 'Unauthorized.'});
+    }
+});
+
+/* DELETE Film */
+router.delete('/film:id', passport.authenticate('jwt', { session: false}), function(req, res, next) {
+    var token = getToken(req.headers);
+    if (token) {
+        Film.findByIdAndRemove(req.params.id, req.body, function (err, post) {
+            if (err) return next(err);
+            res.json(post);
+        });
+    } else {
+        return res.status(403).send({success: false, msg: 'Unauthorized.'});
+    }
+});
 
 getToken = function (headers) {
     if (headers && headers.authorization) {
@@ -108,4 +154,4 @@ getToken = function (headers) {
     }
 };
 
-module.export = router;
+module.exports = router;
