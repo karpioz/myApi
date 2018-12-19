@@ -7,7 +7,7 @@ var jwt = require('jsonwebtoken');
 var router = express.Router();
 var User = require("../models/user");
 var Film = require("../models/film");
-var winston = require('winston');
+var winston = require('./config/winston');
 
 
 ///Create router for signup or register the new user.

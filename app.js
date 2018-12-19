@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var passport = require('passport');
 var config = require('./config/database');
-var winston = require('winston');
+var winston = require('./winston');
 
 winston.add(winston.transports.File, {     "filename": "error.log",     "level": "error" });
 
